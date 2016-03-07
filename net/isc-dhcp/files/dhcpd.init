@@ -3,10 +3,11 @@
 START=65
 
 lease_file=/var/dhcpd.leases
-config_file=/etc/dhcpd.conf
+config_file=/tmp/etc/dhcpd.conf
 pid_file=/var/run/dhcpd.pid
 
 start() {
+	/usr/sbin/gen_dhcpd_conf.lua
 	if [ ! -e $lease_file ]; then
 		touch $lease_file
 	fi
