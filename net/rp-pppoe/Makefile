@@ -113,6 +113,8 @@ endef
 
 define Package/rp-pppoe-server/install
 	$(INSTALL_DIR) $(1)/etc/default
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_BIN) ./files/pppoe.default $(1)/etc/config/pppoe
 	$(INSTALL_BIN) ./files/pppoe-server.default $(1)/etc/default/pppoe-server
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/pppoe-server.init $(1)/etc/init.d/pppoe-server

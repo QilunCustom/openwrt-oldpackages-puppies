@@ -1,13 +1,79 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006-2011 OpenWrt.org
 
-START=50
+START=55
 
-DEFAULT=/etc/default/pppoe-server
+. /lib/functions.sh
+
+PPPoE_OPT_FILE='/etc/ppp/pppoe-server-options'
+
+pppoe_server_run() {
+	## example:
+	## PPP options for the PPPoE server
+	## LIC: GPL
+	# require-pap
+	# login
+	# lcp-echo-interval 10
+	# lcp-echo-failure 2
+	config_get service_name 	$1 service_name
+	config_get interface		$1 interface
+	config_get localip 			$1 localip
+	config_get firstremoteip 	$1 firstremoteip
+	config_get dns1 			$1 dns1
+	config_get dns2 			$1 dns2
+	config_get chap				$1 chap
+	config_get nat 				$1 nat
+	config_get log 				$1 log
+
+	echo "# PPP options for the PPPoE server" >$PPPoE_OPT_FILE
+	echo "# LIC: GPL" >>$PPPoE_OPT_FILE
+	if [ "$chap" == "1" ]; then
+		echo "require-chap" >> $PPPoE_OPT_FILE
+	else
+		echo "debug" >> $PPPoE_OPT_FILE
+		echo "logfile $log" >> $PPPoE_OPT_FILE
+		echo "show-password" >> $PPPoE_OPT_FILE
+		echo "-chap" >> $PPPoE_OPT_FILE
+		echo "require-pap" >> $PPPoE_OPT_FILE
+	fi
+	echo "#login" >>$PPPoE_OPT_FILE
+	echo "auth" >>$PPPoE_OPT_FILE
+	echo "mru 1480" >>$PPPoE_OPT_FILE
+	echo "mtu 1480" >>$PPPoE_OPT_FILE
+	echo "lcp-echo-interval 10" >>$PPPoE_OPT_FILE
+	echo "lcp-echo-failure 2" >>$PPPoE_OPT_FILE
+	echo "ms-dns $dns1" >>$PPPoE_OPT_FILE
+	echo "ms-dns $dns2" >>$PPPoE_OPT_FILE
+	#init secrets
+	echo "#USERNAME  PROVIDER  PASSWORD  IPADDRESS" >/var/secrets
+
+	/usr/sbin/pppoe-server -C $service_name -k -T 60 -I $interface -N 100 -L $localip -R $firstremoteip
+}
+
+pppoe_user_run() {
+	config_get enable $1 enable
+	config_get USERNAME $1 USERNAME
+	config_get PASSWORD $1 PASSWORD
+	config_get IPADDRESS $1 IPADDRESS
+
+	[ "$enable" == "1" ] && echo "$USERNAME	*	$PASSWORD	$IPADDRESS" >> /var/secrets
+}
 
 start() {
-	[ -f $DEFAULT ] && . $DEFAULT
-	service_start /usr/sbin/pppoe-server $OPTIONS
+	#load config && check enable
+	config_load pppoe
+
+	enable=`uci get pppoe.@pppoe_server[0].enable`
+	if [ "$enable" == "1" ]; then
+		config_foreach pppoe_server_run pppoe_server
+		config_foreach pppoe_user_run pppoeuser
+		if [ "$chap" == "1" ]; then
+			mv -f /var/secrets /etc/ppp/chap-secrets
+		else
+			mv -f /var/secrets /etc/ppp/pap-secrets
+		fi
+	fi
+	# service_start /usr/sbin/pppoe-server $OPTIONS
 }
 
 stop() {

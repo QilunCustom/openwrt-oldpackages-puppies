@@ -1,0 +1,28 @@
+
+config 'pppoe_server'
+	option 'enable' '0'
+	option 'ac_name' '~'
+	option 'interface' 'br-lan2'
+	option 'service_name' 'N-PPPoE-S'
+	option 'localip' '10.0.1.1'
+	option 'firstremoteip' '10.0.1.2'
+	option 'maxsessions' '0'
+	option 'maxsessionsperpeer' '0'
+	option 'dns1' '223.5.5.5'
+	option 'dns2' '8.8.8.8'
+	option 'chap' '0'
+	option 'nat' '1'
+	option 'log' '/var/log/pppoe-server.log '
+
+config 'pppoeuser'
+	option 'enable' '1'
+	option 'USERNAME' 'user1'
+	option 'PASSWORD' '123456'
+	option 'IPADDRESS' '10.0.1.2'
+
+config 'pppoeuser'
+	option 'enable' '1'
+	option 'USERNAME' 'user2'
+	option 'PASSWORD' '123456'
+	option 'IPADDRESS' '10.0.1.3'
+
